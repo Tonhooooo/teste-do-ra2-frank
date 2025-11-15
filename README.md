@@ -71,6 +71,158 @@ O programa funciona com os seguintes comandos interativos:
 
 ## 5. Dados Mínimos de Teste (Req 4.1)
 
-Para validar os relatórios, o sistema foi populado com 10 itens distintos.
+-----
 
-**Execução (Terminal):**
+##  Testes Manuais
+
+Abaixo estão os registros de testes manuais executados para validar as principais funcionalidades do sistema: persistência de dados, tratamento de erros de lógica e geração de relatórios.
+
+-----
+
+### Cenário 1: Persistência de Estado (Sucesso)
+
+**Objetivo:** Verificar se o sistema salva o inventário e os logs de auditoria em arquivos (`Inventario.dat`, `Auditoria.log`) e os recarrega corretamente ao reiniciar.
+
+**1. Adicionando Itens (Primeira Execução):**
+O sistema é iniciado com 0 itens. Três itens são adicionados sequencialmente.
+
+```bash
+[1 of 2] Compiling Main           ( main.hs, main.o )
+[2 of 2] Linking a.out
+Sistema de Inventário Haskell
+=================================================
+Itens carregados: 0
+Nenhum log de auditoria anterior encontrado.
+
+Comandos disponíveis:
+...
+Digite um comando (help para opções): add
+ID do item: 1
+Nome: Teste 01
+Quantidade: 20
+Categoria: Sujeito de Teste
+Item adicionado com sucesso.
+
+Digite um comando (help para opções): add
+ID do item: 2
+Nome: Teste 02
+...
+Item adicionado com sucesso.
+
+Digite um comando (help para opções): add
+ID do item: 3
+Nome: Teste 03
+...
+Item adicionado com sucesso.
+```
+
+**2. Verificação dos Arquivos (Após Sair):**
+Após finalizar o programa, os arquivos de persistência foram criados:
+
+  * `Auditoria.log`:
+
+    ```log
+    LogEntry {timestamp = 2025-11-14 23:58:39.485468905 UTC, acao = Add, detalhes = "item=1 :: Adicionado: Teste 01", status = Sucesso}
+    LogEntry {timestamp = 2025-11-14 23:58:54.253775977 UTC, acao = Add, detalhes = "item=2 :: Adicionado: Teste 02", status = Sucesso}
+    LogEntry {timestamp = 2025-11-14 23:59:14.617617937 UTC, acao = Add, detalhes = "item=3 :: Adicionado: Teste 03", status = Sucesso}
+    ```
+
+  * `Inventario.dat`:
+
+    ```dat
+    fromList [("1",Item {itemID = "1", nome = "Teste 01", quantidade = 20, categoria = "Sujeito de Teste"}),("2",Item {itemID = "2", nome = "Teste 02", quantidade = 40, categoria = "Sujeito de Teste"}),("3",Item {itemID = "3", nome = "Teste 03", quantidade = 80, categoria = "Sujeito de Teste"})]
+    ```
+
+**3. Verificação (Após Reiniciar):**
+Ao ser iniciado novamente, o sistema carrega os dados salvos e o comando `list` exibe o inventário correto.
+
+```bash
+[1 of 2] Compiling Main           ( main.hs, main.o )
+[2 of 2] Linking a.out
+Sistema de Inventário Haskell (Projeto de Estudo)
+=================================================
+Itens carregados: 3
+Últimos 5 registros (Auditoria.log):
+LogEntry {timestamp = 2025-11-14 23:58:39.485468905 UTC, acao = Add, detalhes = "item=1 :: Adicionado: Teste 01", status = Sucesso}
+LogEntry {timestamp = 2025-11-14 23:58:54.253775977 UTC, acao = Add, detalhes = "item=2 :: Adicionado: Teste 02", status = Sucesso}
+LogEntry {timestamp = 2025-11-14 23:59:14.617617937 UTC, acao = Add, detalhes = "item=3 :: Adicionado: Teste 03", status = Sucesso}
+
+Comandos disponíveis:
+...
+Digite um comando (help para opções): list
+
+--- Inventário Atual ---
+- 1: Teste 01 | qtd=20 | categoria=Sujeito de Teste
+- 2: Teste 02 | qtd=40 | categoria=Sujeito de Teste
+- 3: Teste 03 | qtd=80 | categoria=Sujeito de Teste
+------------------------
+```
+
+**Resultado:**  **Sucesso.** O estado foi persistido e recarregado corretamente.
+
+-----
+
+### Cenário 2: Tratamento de Erro (Estoque Insuficiente)
+
+**Objetivo:** Verificar se o sistema impede a remoção de uma quantidade maior de itens do que a existente no estoque e se registra essa falha corretamente na auditoria, sem alterar o inventário.
+
+**1. Ações:**
+Adicionamos o "Item 4" com **10 unidades** e, em seguida, tentamos remover **15 unidades**.
+
+```bash
+Digite um comando (help para opções): add
+ID do item: 4
+Nome: Teste 04 
+Quantidade: 10
+Categoria: Sujeito de Teste
+Item adicionado com sucesso.
+
+Digite um comando (help para opções): remove
+ID do item: 4
+Quantidade a remover: 15
+Erro: Estoque insuficiente
+```
+
+**2. Verificação dos Arquivos:**
+Os arquivos de log e inventário devem refletir a tentativa falha.
+
+  * `Auditoria.log` (registra a adição e a falha):
+
+    ```log
+    ...
+    LogEntry {timestamp = 2025-11-15 00:04:40.5459967 UTC, acao = Add, detalhes = "item=4 :: Adicionado: Teste 04", status = Sucesso}
+    LogEntry {timestamp = 2025-11-15 00:04:53.110086095 UTC, acao = Remove, detalhes = "item=4 :: Tentativa de remover -> Estoque insuficiente", status = Falha "Estoque insuficiente"} 
+    ```
+
+  * `Inventario.dat` (item 4 permanece com 10 unidades):
+
+    ```dat
+    fromList [..., ("3",Item {itemID = "3", nome = "Teste 03", quantidade = 80, categoria = "Sujeito de Teste"}),("4",Item {itemID = "4", nome = "Teste 04", quantidade = 10, categoria = "Sujeito de Teste"})]
+    ```
+
+**Resultado:**  **Sucesso.** A operação falhou como esperado, o erro foi logado e o `Inventario.dat` permaneceu íntegro (Item 4 continua com 10 unidades).
+
+-----
+
+### Cenário 3: Geração de Relatório de Erros
+
+**Objetivo:** Verificar se o comando `report` analisa o `Auditoria.log` e exibe corretamente as falhas ocorridas (como a do Cenário 2).
+
+**1. Ação:**
+Executamos o comando `report` após a falha do cenário anterior.
+
+```bash
+Digite um comando (help para opções): report
+
+===== Relatório de Auditoria =====
+Total de entradas registradas: 5
+Item para histórico detalhado (Enter para pular): 
+
+Falhas registradas: 1
+  2025-11-15 00:04:53.110086095 UTC | Remove | Falha: Estoque insuficiente | item=4 :: Tentativa de remover -> Estoque insuficiente
+
+Item mais movimentado: 4 (2 operações)
+==================================
+```
+
+**Resultado:**  **Sucesso.** O relatório identificou e exibiu corretamente a falha de "Estoque insuficiente" registrada no log de auditoria.
