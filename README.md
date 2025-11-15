@@ -71,6 +71,152 @@ O programa funciona com os seguintes comandos interativos:
 
 ## 5. Dados Mínimos de Teste (Req 4.1)
 
-Para validar os relatórios, o sistema foi populado com 10 itens distintos.
+# Testes Manuais:
+
+## Cenário 1: Persistência de Estado (Sucesso)
+
+[1 of 2] Compiling Main             ( main.hs, main.o )
+[2 of 2] Linking a.out
+Sistema de Inventário Haskell
+=================================================
+Itens carregados: 0
+Nenhum log de auditoria anterior encontrado.
+
+Comandos disponíveis:
+  add       - adicionar novo item
+  remove    - remover unidades de um item
+  update    - atualizar campos de um item
+  query     - consultar item
+  list      - listar inventário completo
+  report    - gerar relatório baseado nos logs
+  help      - mostrar este menu
+  exit      - sair do sistema
+
+Digite um comando (help para opções): add
+ID do item: 1
+Nome: Teste 01
+Quantidade: 20
+Categoria: Sujeito de Teste
+Item adicionado com sucesso.
+
+Digite um comando (help para opções): add
+ID do item: 2
+Nome: Teste 02
+Quantidade: 40
+Categoria: Sujeito de Teste
+Item adicionado com sucesso.
+
+Digite um comando (help para opções): add
+ID do item: 3
+Nome: Teste 03
+Quantidade: 80
+Categoria: Sujeito de Teste
+Item adicionado com sucesso.
+
+### Após finalizar o programa os arquivos (Auditoria.log e Inventario.dat) foram criados com as respectivas ações.
+
+Auditoria.log: 
+LogEntry {timestamp = 2025-11-14 23:58:39.485468905 UTC, acao = Add, detalhes = "item=1 :: Adicionado: Teste 01", status = Sucesso}
+LogEntry {timestamp = 2025-11-14 23:58:54.253775977 UTC, acao = Add, detalhes = "item=2 :: Adicionado: Teste 02", status = Sucesso}
+LogEntry {timestamp = 2025-11-14 23:59:14.617617937 UTC, acao = Add, detalhes = "item=3 :: Adicionado: Teste 03", status = Sucesso}
+
+Inventario.dat:
+fromList [("1",Item {itemID = "1", nome = "Teste 01", quantidade = 20, categoria = "Sujeito de Teste"}),("2",Item {itemID = "2", nome = "Teste 02", quantidade = 40, categoria = "Sujeito de Teste"}),("3",Item {itemID = "3", nome = "Teste 03", quantidade = 80, categoria = "Sujeito de Teste"})]
+
+### Reiniciando o programa:
+[1 of 2] Compiling Main             ( main.hs, main.o )
+[2 of 2] Linking a.out
+Sistema de Inventário Haskell (Projeto de Estudo)
+=================================================
+Itens carregados: 3
+Últimos 5 registros (Auditoria.log):
+LogEntry {timestamp = 2025-11-14 23:58:39.485468905 UTC, acao = Add, detalhes = "item=1 :: Adicionado: Teste 01", status = Sucesso}
+LogEntry {timestamp = 2025-11-14 23:58:54.253775977 UTC, acao = Add, detalhes = "item=2 :: Adicionado: Teste 02", status = Sucesso}
+LogEntry {timestamp = 2025-11-14 23:59:14.617617937 UTC, acao = Add, detalhes = "item=3 :: Adicionado: Teste 03", status = Sucesso}
+
+Comandos disponíveis:
+  add       - adicionar novo item
+  remove    - remover unidades de um item
+  update    - atualizar campos de um item
+  query     - consultar item
+  list      - listar inventário completo
+  report    - gerar relatório baseado nos logs
+  help      - mostrar este menu
+  exit      - sair do sistema
+
+Digite um comando (help para opções): list
+
+--- Inventário Atual ---
+- 1: Teste 01 | qtd=20 | categoria=Sujeito de Teste
+- 2: Teste 02 | qtd=40 | categoria=Sujeito de Teste
+- 3: Teste 03 | qtd=80 | categoria=Sujeito de Teste
+------------------------
+
+## Cenário 2: Erro de Lógica (Estoque Insuficiente)
+
+Comandos disponíveis:
+  add       - adicionar novo item
+  remove    - remover unidades de um item
+  update    - atualizar campos de um item
+  query     - consultar item
+  list      - listar inventário completo
+  report    - gerar relatório baseado nos logs
+  help      - mostrar este menu
+  exit      - sair do sistema
+
+Digite um comando (help para opções): add
+ID do item: 4
+Nome: Teste 04 
+Quantidade: 10
+Categoria: Sujeito de Teste
+Item adicionado com sucesso.
+
+Digite um comando (help para opções): remove
+ID do item: 4
+Quantidade a remover: 15
+Erro: Estoque insuficiente
+
+### Verificando os arquivos Auditoria.log e Inventario.dat
+
+Auditoria.log:
+
+LogEntry {timestamp = 2025-11-14 23:58:39.485468905 UTC, acao = Add, detalhes = "item=1 :: Adicionado: Teste 01", status = Sucesso}
+LogEntry {timestamp = 2025-11-14 23:58:54.253775977 UTC, acao = Add, detalhes = "item=2 :: Adicionado: Teste 02", status = Sucesso}
+LogEntry {timestamp = 2025-11-14 23:59:14.617617937 UTC, acao = Add, detalhes = "item=3 :: Adicionado: Teste 03", status = Sucesso}
+LogEntry {timestamp = 2025-11-15 00:04:40.5459967 UTC, acao = Add, detalhes = "item=4 :: Adicionado: Teste 04", status = Sucesso}
+LogEntry {timestamp = 2025-11-15 00:04:53.110086095 UTC, acao = Remove, detalhes = "item=4 :: Tentativa de remover -> Estoque insuficiente", status = Falha "Estoque insuficiente"} 
+
+Inventario.dat:
+
+fromList [("1",Item {itemID = "1", nome = "Teste 01", quantidade = 20, categoria = "Sujeito de Teste"}),("2",Item {itemID = "2", nome = "Teste 02", quantidade = 40, categoria = "Sujeito de Teste"}),("3",Item {itemID = "3", nome = "Teste 03", quantidade = 80, categoria = "Sujeito de Teste"}),("4",Item {itemID = "4", nome = "Teste 04", quantidade = 10, categoria = "Sujeito de Teste"})]
+
+### Como foi possível ver o erro apareceu no log da Auditoria e a quantidade de Itens no inventario.dat não diminuiu por conta do erro.
+
+## Cenário 3: Geração de Relatório de Erros
+
+Comandos disponíveis:
+  add       - adicionar novo item
+  remove    - remover unidades de um item
+  update    - atualizar campos de um item
+  query     - consultar item
+  list      - listar inventário completo
+  report    - gerar relatório baseado nos logs
+  help      - mostrar este menu
+  exit      - sair do sistema
+
+Digite um comando (help para opções): report
+
+===== Relatório de Auditoria =====
+Total de entradas registradas: 5
+Item para histórico detalhado (Enter para pular): 
+
+Falhas registradas: 1
+  2025-11-15 00:04:53.110086095 UTC | Remove | Falha: Estoque insuficiente | item=4 :: Tentativa de remover -> Estoque insuficiente
+
+Item mais movimentado: 4 (2 operações)
+==================================
+
+### Como foi possível ver o relatório gerado após a utilização do comando "report"  nos mostra o ERRO cometido no Cenário 2 (a tentativa de remover
+estoque insuficiente).
 
 **Execução (Terminal):**
